@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.next/
+.runtime-node20/
+.claude/
+.env
+.env.local
+.env.*.local
+!.env.example
+*.log
+*.tsbuildinfo
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+tripmate-*.pdf
+.DS_Store
