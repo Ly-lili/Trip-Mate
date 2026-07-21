@@ -7,7 +7,8 @@ import { config } from './config.js';
 import { Agent } from './agent/runtime.js';
 import { LLMClient } from './llm/client.js';
 import { ToolRegistry } from './tools/registry.js';
-import { MCPToolProvider, type MCPServerConfig } from './tools/mcp.js';
+import { MCPToolProvider } from './tools/mcp.js';
+import { getMcpServers } from './mcp-config.js';
 import { SessionStore } from './session/store.js';
 import { SqliteBackend } from './session/sqlite-backend.js';
 import { Compactor } from './session/compactor.js';
@@ -15,34 +16,6 @@ import { MemoryToolProvider } from './tools/memory-tool.js';
 import { Logger, Metrics } from './observability.js';
 import { exportSessionPDF } from './export/index.js';
 import { writeFile } from 'node:fs/promises';
-
-const MCP_SERVERS: MCPServerConfig[] = [
-  {
-    name: '12306',
-    transport: 'http',
-    url: 'https://mcp.api-inference.modelscope.net/b793b009505842/mcp',
-  },
-  {
-    name: 'amap',
-    transport: 'http',
-    url: 'https://mcp.api-inference.modelscope.net/e31e8c631e8744/mcp',
-  },
-  {
-    name: 'bing',
-    transport: 'sse',
-    url: 'https://mcp.api-inference.modelscope.net/6ab4fe285a174c/sse',
-  },
-  {
-    name: 'rollinggo',
-    transport: 'http',
-    url: 'https://mcp.api-inference.modelscope.net/7cd3c31d85ca45/mcp',
-  },
-  {
-    name: 'variflight',
-    transport: 'sse',
-    url: 'https://mcp.api-inference.modelscope.net/c6c1123a1a224a/sse',
-  },
-];
 
 const RESET = '\x1b[0m';
 const DIM = '\x1b[2m';
@@ -70,7 +43,7 @@ async function main(): Promise<void> {
   await tools.register(new MemoryToolProvider(backend));
 
   const mcpProviders: MCPToolProvider[] = [];
-  for (const cfg of MCP_SERVERS) {
+  for (const cfg of getMcpServers()) {
     const provider = new MCPToolProvider(cfg);
     try {
       await provider.connect();
