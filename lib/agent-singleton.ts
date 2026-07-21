@@ -7,39 +7,12 @@ import { Agent } from '../dist/agent/runtime.js';
 import { LLMClient } from '../dist/llm/client.js';
 import { ToolRegistry } from '../dist/tools/registry.js';
 import { MCPToolProvider } from '../dist/tools/mcp.js';
+import { getMcpServers } from '../dist/mcp-config.js';
 import { SessionStore } from '../dist/session/store.js';
 import { SqliteBackend } from '../dist/session/sqlite-backend.js';
 import { Compactor } from '../dist/session/compactor.js';
 import { MemoryToolProvider } from '../dist/tools/memory-tool.js';
 import { Logger, Metrics } from '../dist/observability.js';
-
-const MCP_SERVERS = [
-  {
-    name: '12306',
-    transport: 'http',
-    url: 'https://mcp.api-inference.modelscope.net/b793b009505842/mcp',
-  },
-  {
-    name: 'amap',
-    transport: 'http',
-    url: 'https://mcp.api-inference.modelscope.net/e31e8c631e8744/mcp',
-  },
-  {
-    name: 'bing',
-    transport: 'sse',
-    url: 'https://mcp.api-inference.modelscope.net/6ab4fe285a174c/sse',
-  },
-  {
-    name: 'rollinggo',
-    transport: 'http',
-    url: 'https://mcp.api-inference.modelscope.net/7cd3c31d85ca45/mcp',
-  },
-  {
-    name: 'variflight',
-    transport: 'sse',
-    url: 'https://mcp.api-inference.modelscope.net/c6c1123a1a224a/sse',
-  },
-] as const;
 
 type RuntimeState = {
   agent: any;
@@ -76,7 +49,11 @@ async function createRuntime(): Promise<RuntimeState> {
 
   const mcpStatus: RuntimeState['mcpStatus'] = [];
   if (env.TRIPMATE_SKIP_MCP !== '1') {
-    const connections = await Promise.all(MCP_SERVERS.map(async (cfg) => {
+    const connections = await Promise.all(getMcpServers().map(async (cfg: {
+      name: string;
+      transport: 'http' | 'sse';
+      url: string;
+    }) => {
       const provider = new MCPToolProvider(cfg);
       try {
         await withTimeout(provider.connect(), 12_000, `${cfg.name} MCP connection timed out`);
